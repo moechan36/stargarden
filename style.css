@@ -4,13 +4,19 @@
   box-sizing: border-box;
 }
 
-body {
-  height: 100vh;
-  background: radial-gradient(ellipse at bottom, #0b1a2a 0%, #020409 100%);
+html, body {
+  height: 100%;
   overflow: hidden;
+  overscroll-behavior: none;
+}
+
+body {
+  height: 100dvh;
+  background: radial-gradient(ellipse at bottom, #0b1a2a 0%, #020409 100%);
   font-family: system-ui, sans-serif;
 }
 
+/* 夜空 */
 #sky {
   position: relative;
   width: 100%;
@@ -20,11 +26,7 @@ body {
 /* 星 */
 .star {
   position: absolute;
-  width: 2px;
-  height: 2px;
-  background: white;
   border-radius: 50%;
-  opacity: 0.8;
   animation: twinkle 3s infinite ease-in-out;
 }
 
@@ -33,7 +35,7 @@ body {
   50% { opacity: 1; }
 }
 
-/* 中央ボタン */
+/* ＋ボタン */
 #addStar {
   position: fixed;
   bottom: 24px;
@@ -43,82 +45,40 @@ body {
   height: 56px;
   border-radius: 50%;
   border: none;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255,255,255,0.1);
   color: white;
   font-size: 24px;
   cursor: pointer;
   backdrop-filter: blur(4px);
+  z-index: 10;
 }
 
-#addStar:hover {
-  background: rgba(255, 255, 255, 0.2);
+/* 🌙 月 */
+#moon {
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #f5f3ce;
+  box-shadow: 0 0 12px rgba(245,243,206,0.6);
+  opacity: 0.9;
+  pointer-events: none;
+  z-index: 5;
 }
 
-/* 流れ星 */
-.shooting-star {
-  position: absolute;
-  width: 120px;
-  height: 1px;
-  background: linear-gradient(90deg, rgba(255,255,255,0.8), transparent);
-  opacity: 0.8;
-  transform: rotate(-20deg);
-  animation: shoot 1.2s ease-out forwards;
-}
-
-@keyframes shoot {
-  from {
-    transform: translate(0, 0) rotate(-20deg);
-    opacity: 1;
-  }
-  to {
-    transform: translate(300px, 200px) rotate(-20deg);
-    opacity: 0;
-  }
-}
-
-/* ===== スマホ対応 ===== */
+/* スマホ調整 */
 @media (max-width: 768px) {
-
-  /* ＋ボタンを押しやすく */
   #addStar {
     width: 64px;
     height: 64px;
     font-size: 28px;
-    bottom: 20px;
   }
 
-  /* 星を少し大きく（タップしやすく） */
   .star {
-    width: 3px;
-    height: 3px;
-  }
-
-  /* メモ入力を指で隠れない位置に */
-  #memoInputBox {
-    font-size: 14px;
-    padding: 6px 8px;
-    transform: translateY(-8px);
+    min-width: 3px;
+    min-height: 3px;
   }
 }
 
-input {
-  font-size: 16px;
-}
-
-/* ===== スマホ縦画面・スクロールなし ===== */
-html, body {
-  height: 100%;
-  overflow: hidden;
-  overscroll-behavior: none;
-}
-
-body {
-  height: 100dvh;
-}
-
-/* スマホのみ調整 */
-@media (max-width: 768px) {
-  body {
-    touch-action: manipulation;
-  }
-}

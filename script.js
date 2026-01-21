@@ -27,10 +27,10 @@ createMoon();
 updateMoon();
 createHamburger();
 
-/* ===== ＋ボタン ===== */
+/* ===== ＋ ===== */
 addStarBtn.addEventListener("click", openEmotionPicker);
 
-/* ===== 星を描画 ===== */
+/* ===== 星描画 ===== */
 function drawStar(star) {
   const el = document.createElement("div");
   el.className = "star";
@@ -41,16 +41,16 @@ function drawStar(star) {
   el.style.opacity = star.opacity;
   el.style.background = star.color;
 
-  el.onclick = e => {
+  el.addEventListener("click", e => {
     e.stopPropagation();
     openMemoInput(star, el);
-  };
+  });
 
   sky.appendChild(el);
   return el;
 }
 
-/* ===== 感情選択（ラベルあり） ===== */
+/* ===== 感情選択 ===== */
 function openEmotionPicker() {
   if (document.getElementById("emotionPicker")) return;
 
@@ -65,7 +65,7 @@ function openEmotionPicker() {
     gap: 14px;
     flex-wrap: wrap;
     justify-content: center;
-    z-index: 20;
+    z-index: 10000;
   `;
 
   emotions.forEach(e => {
@@ -88,10 +88,11 @@ function openEmotionPicker() {
       margin-bottom: 4px;
     `;
 
-    dot.onclick = () => {
+    dot.addEventListener("click", e2 => {
+      e2.stopPropagation();
       createStar(e);
       picker.remove();
-    };
+    });
 
     const label = document.createElement("div");
     label.textContent = e.label;
@@ -101,12 +102,13 @@ function openEmotionPicker() {
   });
 
   document.body.appendChild(picker);
+
   setTimeout(() => {
     document.addEventListener("click", () => picker.remove(), { once: true });
   }, 0);
 }
 
-/* ===== 星を生成 ===== */
+/* ===== 星生成 ===== */
 function createStar(emotion) {
   const now = Date.now();
 
@@ -138,7 +140,7 @@ function createStar(emotion) {
   updateMoon();
 }
 
-/* ===== メモ入力 ===== */
+/* ===== メモ ===== */
 function openMemoInput(star, el) {
   const old = document.getElementById("memoInputBox");
   if (old) old.remove();
@@ -160,21 +162,21 @@ function openMemoInput(star, el) {
     padding: 6px 8px;
     font-size: 16px;
     outline: none;
-    z-index: 30;
+    z-index: 10000;
   `;
 
-  input.onblur = () => {
+  input.addEventListener("blur", () => {
     star.memo = input.value.trim();
     saveStars();
     saveMemory(star);
     input.remove();
-  };
+  });
 
   document.body.appendChild(input);
   input.focus();
 }
 
-/* ===== 🌙 神々しい月 ===== */
+/* ===== 🌙 月 ===== */
 function createMoon() {
   if (document.getElementById("moon")) return;
 
@@ -182,13 +184,14 @@ function createMoon() {
   moon.id = "moon";
   moon.style.cssText = `
     position: fixed;
-    top: 16px;
-    left: 16px;
-    width: 38px;
-    height: 38px;
+    top: 24px;
+    left: 24px;
+    width: 100px;
+    height: 100px;
     border-radius: 50%;
-    pointer-events: none;
-    z-index: 10;
+    cursor: pointer;
+    z-index: 9999;
+    pointer-events: auto;
     background:
       radial-gradient(circle at 30% 30%,
         rgba(255,255,255,0.95) 0%,
@@ -198,14 +201,20 @@ function createMoon() {
         rgba(120,110,80,0.7) 100%
       );
     box-shadow:
-      0 0 10px rgba(255,255,220,0.6),
-      0 0 22px rgba(255,255,220,0.35),
-      0 0 40px rgba(255,255,220,0.2);
+      0 0 18px rgba(255,255,220,0.6),
+      0 0 40px rgba(255,255,220,0.35),
+      0 0 80px rgba(255,255,220,0.2);
   `;
+
+  moon.addEventListener("click", e => {
+    e.stopPropagation();
+    openEmotionStats();
+  });
 
   document.body.appendChild(moon);
 }
 
+/* ===== 月の満ち欠け ===== */
 function updateMoon() {
   const moon = document.getElementById("moon");
   if (!moon) return;
@@ -225,13 +234,108 @@ function updateMoon() {
   `;
 
   moon.style.boxShadow = `
-    0 0 ${12 * glow}px rgba(255,255,220,0.6),
-    0 0 ${26 * glow}px rgba(255,255,220,0.35),
-    0 0 ${46 * glow}px rgba(255,255,220,0.2)
+    0 0 ${18 * glow}px rgba(255,255,220,0.6),
+    0 0 ${40 * glow}px rgba(255,255,220,0.35),
+    0 0 ${80 * glow}px rgba(255,255,220,0.2)
   `;
 }
 
-/* ===== 星の掃除（3日） ===== */
+/* ===== 🌙 感情統計（％表示） ===== */
+function openEmotionStats() {
+  if (document.getElementById("emotionStats")) return;
+
+  const counts = {};
+  stars.forEach(s => {
+    if (!s.label) return;
+    counts[s.label] = (counts[s.label] || 0) + 1;
+  });
+
+  const total = stars.length;
+
+  const overlay = document.createElement("div");
+  overlay.id = "emotionStats";
+  overlay.style.cssText = `
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.75);
+    backdrop-filter: blur(6px);
+    z-index: 10000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  `;
+
+  const box = document.createElement("div");
+  box.style.cssText = `
+    background: rgba(10,15,25,0.9);
+    border-radius: 18px;
+    padding: 24px 20px;
+    width: 90%;
+    max-width: 320px;
+    color: white;
+    font-size: 14px;
+  `;
+
+  const title = document.createElement("div");
+  title.textContent = "この空の感情";
+  title.style.cssText = `
+    text-align: center;
+    font-size: 15px;
+    margin-bottom: 16px;
+    opacity: 0.9;
+  `;
+  box.appendChild(title);
+
+  if (total === 0) {
+    const empty = document.createElement("div");
+    empty.textContent = "まだ星はありません";
+    empty.style.cssText = `
+      text-align: center;
+      font-size: 13px;
+      opacity: 0.6;
+    `;
+    box.appendChild(empty);
+  } else {
+    emotions.forEach(e => {
+      const count = counts[e.label];
+      if (!count) return;
+
+      const percent = Math.round((count / total) * 100);
+
+      const row = document.createElement("div");
+      row.style.cssText = `
+        display: flex;
+        align-items: center;
+        margin-bottom: 10px;
+      `;
+
+      const dot = document.createElement("span");
+      dot.style.cssText = `
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: ${e.color};
+        margin-right: 10px;
+      `;
+
+      const text = document.createElement("span");
+      text.innerHTML = `
+        ${e.label}　${count}
+        <span style="opacity:0.6;font-size:12px;">（${percent}%）</span>
+      `;
+
+      row.appendChild(dot);
+      row.appendChild(text);
+      box.appendChild(row);
+    });
+  }
+
+  overlay.appendChild(box);
+  overlay.addEventListener("click", () => overlay.remove());
+  document.body.appendChild(overlay);
+}
+
+/* ===== 星の掃除 ===== */
 function cleanupStars() {
   const now = Date.now();
   stars = stars.filter(s => now - s.createdAt < THREE_DAYS);
@@ -243,10 +347,8 @@ function saveStars() {
   localStorage.setItem("stargarden-stars", JSON.stringify(stars));
 }
 
-/* ★ 履歴は「書いた言葉だけ」 */
 function saveMemory(star) {
-  if (!star.memo || star.memo.trim() === "") return;
-  if (!star.label) return;
+  if (!star.memo || !star.label) return;
 
   memories.push({
     color: star.color,
@@ -255,10 +357,7 @@ function saveMemory(star) {
     createdAt: Date.now()
   });
 
-  localStorage.setItem(
-    "stargarden-memories",
-    JSON.stringify(memories)
-  );
+  localStorage.setItem("stargarden-memories", JSON.stringify(memories));
 }
 
 /* ===== ☰ 履歴 ===== */
@@ -272,9 +371,9 @@ function createHamburger() {
     color: white;
     font-size: 20px;
     cursor: pointer;
-    z-index: 10;
+    z-index: 9999;
   `;
-  btn.onclick = openHistory;
+  btn.addEventListener("click", openHistory);
   document.body.appendChild(btn);
 }
 
@@ -291,7 +390,7 @@ function openHistory() {
     padding: 24px;
     overflow-y: auto;
     font-size: 14px;
-    z-index: 20;
+    z-index: 10000;
   `;
 
   memories.slice().reverse().forEach(m => {
@@ -304,6 +403,6 @@ function openHistory() {
     panel.appendChild(row);
   });
 
-  panel.onclick = () => panel.remove();
+  panel.addEventListener("click", () => panel.remove());
   document.body.appendChild(panel);
 }
