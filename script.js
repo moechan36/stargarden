@@ -4,13 +4,15 @@ const addStarBtn = document.getElementById("addStar");
 /* ===== 定数 ===== */
 const THREE_DAYS = 1000 * 60 * 60 * 24 * 3;
 
-/* 感情 × 色 定義 */
+/* ===== 感情 × 色 ===== */
 const emotions = [
-  { color: "#6fa8ff", label: "悲" }, // 青：悲しい・寂しい
-  { color: "#ff9acb", label: "嬉" }, // ピンク：嬉しい
-  { color: "#ff5c5c", label: "燃" }, // 赤：燃えてる
-  { color: "#ffd966", label: "暖" }, // 黄色：暖かい
-  { color: "#93c47d", label: "穏" }  // 緑：穏やか
+  { color: "#6fa8ff", label: "悲" },
+  { color: "#ff9acb", label: "嬉" },
+  { color: "#ff5c5c", label: "燃" },
+  { color: "#ffd966", label: "暖" },
+  { color: "#93c47d", label: "穏" },
+  { color: "#ffffff", label: "面" },
+  { color: "#999999", label: "怒" }
 ];
 
 /* ===== データ ===== */
@@ -18,15 +20,15 @@ let stars = JSON.parse(localStorage.getItem("stargarden-stars")) || [];
 let memories = JSON.parse(localStorage.getItem("stargarden-memories")) || [];
 let lastStarElement = null;
 
-/* ===== 初期処理 ===== */
+/* ===== 初期化 ===== */
 cleanupStars();
 stars.forEach(drawStar);
+createMoon();
+updateMoon();
 createHamburger();
 
 /* ===== ＋ボタン ===== */
-addStarBtn.addEventListener("click", () => {
-  openEmotionPicker();
-});
+addStarBtn.addEventListener("click", openEmotionPicker);
 
 /* ===== 星を描画 ===== */
 function drawStar(star) {
@@ -39,16 +41,16 @@ function drawStar(star) {
   el.style.opacity = star.opacity;
   el.style.background = star.color;
 
-  el.addEventListener("click", (e) => {
+  el.onclick = e => {
     e.stopPropagation();
     openMemoInput(star, el);
-  });
+  };
 
   sky.appendChild(el);
   return el;
 }
 
-/* ===== 感情選択 ===== */
+/* ===== 感情選択（ラベルあり） ===== */
 function openEmotionPicker() {
   if (document.getElementById("emotionPicker")) return;
 
@@ -63,6 +65,7 @@ function openEmotionPicker() {
     gap: 14px;
     flex-wrap: wrap;
     justify-content: center;
+    z-index: 20;
   `;
 
   emotions.forEach(e => {
@@ -72,7 +75,7 @@ function openEmotionPicker() {
       flex-direction: column;
       align-items: center;
       font-size: 10px;
-      color: rgba(255,255,255,0.7);
+      color: rgba(255,255,255,0.75);
     `;
 
     const dot = document.createElement("div");
@@ -93,21 +96,17 @@ function openEmotionPicker() {
     const label = document.createElement("div");
     label.textContent = e.label;
 
-    wrap.appendChild(dot);
-    wrap.appendChild(label);
+    wrap.append(dot, label);
     picker.appendChild(wrap);
   });
 
   document.body.appendChild(picker);
-
   setTimeout(() => {
-    document.addEventListener("click", () => {
-      if (picker.parentNode) picker.remove();
-    }, { once: true });
+    document.addEventListener("click", () => picker.remove(), { once: true });
   }, 0);
 }
 
-/* ===== 星を作る（スマホ端対策込み） ===== */
+/* ===== 星を生成 ===== */
 function createStar(emotion) {
   const now = Date.now();
 
@@ -126,20 +125,20 @@ function createStar(emotion) {
   stars.push(star);
   saveStars();
 
-  /* 前の星の強調を解除 */
   if (lastStarElement) {
     lastStarElement.style.boxShadow = "";
     lastStarElement.style.transform = "";
   }
 
-  /* 新しい星を描画して強調 */
   const el = drawStar(star);
   el.style.boxShadow = `0 0 14px 5px ${star.color}`;
   el.style.transform = "scale(1.6)";
   lastStarElement = el;
+
+  updateMoon();
 }
 
-/* ===== メモ入力（スマホでも隠れにくい） ===== */
+/* ===== メモ入力 ===== */
 function openMemoInput(star, el) {
   const old = document.getElementById("memoInputBox");
   if (old) old.remove();
@@ -161,10 +160,11 @@ function openMemoInput(star, el) {
     padding: 6px 8px;
     font-size: 16px;
     outline: none;
+    z-index: 30;
   `;
 
   input.onblur = () => {
-    star.memo = input.value;
+    star.memo = input.value.trim();
     saveStars();
     saveMemory(star);
     input.remove();
@@ -174,16 +174,79 @@ function openMemoInput(star, el) {
   input.focus();
 }
 
-/* ===== 3日経過した星を削除 ===== */
+/* ===== 🌙 神々しい月 ===== */
+function createMoon() {
+  if (document.getElementById("moon")) return;
+
+  const moon = document.createElement("div");
+  moon.id = "moon";
+  moon.style.cssText = `
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 10;
+    background:
+      radial-gradient(circle at 30% 30%,
+        rgba(255,255,255,0.95) 0%,
+        rgba(245,243,206,0.9) 35%,
+        rgba(220,215,170,0.85) 55%,
+        rgba(180,170,120,0.8) 70%,
+        rgba(120,110,80,0.7) 100%
+      );
+    box-shadow:
+      0 0 10px rgba(255,255,220,0.6),
+      0 0 22px rgba(255,255,220,0.35),
+      0 0 40px rgba(255,255,220,0.2);
+  `;
+
+  document.body.appendChild(moon);
+}
+
+function updateMoon() {
+  const moon = document.getElementById("moon");
+  if (!moon) return;
+
+  const count = stars.length;
+  const offset = count === 0 ? 85 : count <= 2 ? 65 : count <= 5 ? 35 : 0;
+  const glow = count === 0 ? 0.4 : count <= 2 ? 0.6 : count <= 5 ? 0.8 : 1;
+
+  moon.style.background = `
+    radial-gradient(circle at ${100 - offset}% 50%,
+      rgba(255,255,255,0.95) 0%,
+      rgba(245,243,206,0.9) 35%,
+      rgba(220,215,170,0.85) 55%,
+      rgba(180,170,120,0.8) 70%,
+      rgba(120,110,80,0.7) 100%
+    )
+  `;
+
+  moon.style.boxShadow = `
+    0 0 ${12 * glow}px rgba(255,255,220,0.6),
+    0 0 ${26 * glow}px rgba(255,255,220,0.35),
+    0 0 ${46 * glow}px rgba(255,255,220,0.2)
+  `;
+}
+
+/* ===== 星の掃除（3日） ===== */
 function cleanupStars() {
   const now = Date.now();
   stars = stars.filter(s => now - s.createdAt < THREE_DAYS);
   saveStars();
 }
 
-/* ===== 履歴保存 ===== */
+/* ===== 保存 ===== */
+function saveStars() {
+  localStorage.setItem("stargarden-stars", JSON.stringify(stars));
+}
+
+/* ★ 履歴は「書いた言葉だけ」 */
 function saveMemory(star) {
-  if (!star.memo) return;
+  if (!star.memo || star.memo.trim() === "") return;
+  if (!star.label) return;
 
   memories.push({
     color: star.color,
@@ -192,15 +255,13 @@ function saveMemory(star) {
     createdAt: Date.now()
   });
 
-  localStorage.setItem("stargarden-memories", JSON.stringify(memories));
+  localStorage.setItem(
+    "stargarden-memories",
+    JSON.stringify(memories)
+  );
 }
 
-/* ===== 保存 ===== */
-function saveStars() {
-  localStorage.setItem("stargarden-stars", JSON.stringify(stars));
-}
-
-/* ===== ハンバーガーメニュー ===== */
+/* ===== ☰ 履歴 ===== */
 function createHamburger() {
   const btn = document.createElement("div");
   btn.textContent = "☰";
@@ -209,16 +270,14 @@ function createHamburger() {
     top: 16px;
     right: 16px;
     color: white;
-    cursor: pointer;
     font-size: 20px;
+    cursor: pointer;
     z-index: 10;
   `;
-
   btn.onclick = openHistory;
   document.body.appendChild(btn);
 }
 
-/* ===== 履歴表示（日時付き） ===== */
 function openHistory() {
   if (document.getElementById("historyPanel")) return;
 
@@ -241,9 +300,6 @@ function openHistory() {
     row.innerHTML = `
       <span style="color:${m.color}">●</span>
       ${m.label}「${m.memo}」
-      <div style="font-size:10px;opacity:.6">
-        ${formatDateTime(m.createdAt)}
-      </div>
     `;
     panel.appendChild(row);
   });
@@ -251,28 +307,3 @@ function openHistory() {
   panel.onclick = () => panel.remove();
   document.body.appendChild(panel);
 }
-
-/* ===== 日時フォーマット ===== */
-function formatDateTime(timestamp) {
-  const d = new Date(timestamp);
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  const h = String(d.getHours()).padStart(2, "0");
-  const min = String(d.getMinutes()).padStart(2, "0");
-  return `${y}.${m}.${day} ${h}:${min}`;
-}
-
-/* ===== 流れ星 ===== */
-function createShootingStar() {
-  const star = document.createElement("div");
-  star.className = "shooting-star";
-  star.style.top = Math.random() * window.innerHeight * 0.3 + "px";
-  star.style.left = Math.random() * window.innerWidth * 0.3 + "px";
-  sky.appendChild(star);
-  setTimeout(() => star.remove(), 1200);
-}
-
-setInterval(() => {
-  if (Math.random() < 0.15) createShootingStar();
-}, 8000);
