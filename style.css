@@ -64,9 +64,10 @@ body {
   background: #f5f3ce;
   box-shadow: 0 0 12px rgba(245,243,206,0.6);
   opacity: 0.9;
-  pointer-events: none;
-  z-index: 5;
+  pointer-events: auto; /* ← ここを変更 or 行ごと削除 */
+  z-index: 10001;       /* ← 念のため前面に */
 }
+
 
 /* スマホ調整 */
 @media (max-width: 768px) {
