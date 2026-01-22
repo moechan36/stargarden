@@ -41,10 +41,10 @@ function drawStar(star) {
   el.style.opacity = star.opacity;
   el.style.background = star.color;
 
-  el.addEventListener("click", e => {
+  el.onclick = e => {
     e.stopPropagation();
     openMemoInput(star, el);
-  });
+  };
 
   sky.appendChild(el);
   return el;
@@ -88,11 +88,11 @@ function openEmotionPicker() {
       margin-bottom: 4px;
     `;
 
-    dot.addEventListener("click", e2 => {
-      e2.stopPropagation();
+    dot.onclick = ev => {
+      ev.stopPropagation();
       createStar(e);
       picker.remove();
-    });
+    };
 
     const label = document.createElement("div");
     label.textContent = e.label;
@@ -164,12 +164,12 @@ function openMemoInput(star, el) {
     z-index: 10000;
   `;
 
-  input.addEventListener("blur", () => {
+  input.onblur = () => {
     star.memo = input.value.trim();
     saveStars();
     saveMemory(star);
     input.remove();
-  });
+  };
 
   document.body.appendChild(input);
   input.focus();
@@ -200,10 +200,10 @@ function createMoon() {
       );
   `;
 
-  moon.addEventListener("click", e => {
+  moon.onclick = e => {
     e.stopPropagation();
     openEmotionStats();
-  });
+  };
 
   document.body.appendChild(moon);
 }
@@ -227,7 +227,7 @@ function updateMoon() {
   `;
 }
 
-/* ===== 🌙 感情統計（％） ===== */
+/* ===== 🌙 感情統計（完全版） ===== */
 function openEmotionStats() {
   if (document.getElementById("emotionStats")) return;
 
@@ -245,6 +245,7 @@ function openEmotionStats() {
     position: fixed;
     inset: 0;
     background: rgba(0,0,0,0.75);
+    backdrop-filter: blur(6px);
     z-index: 10000;
     display: flex;
     justify-content: center;
@@ -255,25 +256,40 @@ function openEmotionStats() {
   box.style.cssText = `
     background: rgba(10,15,25,0.9);
     border-radius: 18px;
-    padding: 24px;
+    padding: 24px 20px;
     width: 90%;
     max-width: 320px;
     color: white;
+    font-size: 14px;
   `;
 
-  emotions.forEach(e => {
-    const count = counts[e.label];
-    if (!count) return;
-    const percent = Math.round((count / total) * 100);
+  const title = document.createElement("div");
+  title.textContent = "この空の感情";
+  title.style.cssText = `
+    text-align: center;
+    font-size: 15px;
+    margin-bottom: 16px;
+    opacity: 0.9;
+  `;
+  box.appendChild(title);
 
-    box.innerHTML += `
-      <div>
-        <span style="color:${e.color}">●</span>
-        ${e.label} ${count}
-        <span style="opacity:.6">（${percent}%）</span>
-      </div>
-    `;
-  });
+  if (total === 0) {
+    box.innerHTML += `<div style="text-align:center;opacity:.6;">まだ星はありません</div>`;
+  } else {
+    emotions.forEach(e => {
+      const count = counts[e.label];
+      if (!count) return;
+      const percent = Math.round((count / total) * 100);
+
+      box.innerHTML += `
+        <div style="margin-bottom:10px;">
+          <span style="color:${e.color}">●</span>
+          ${e.label} ${count}
+          <span style="opacity:.6;font-size:12px;">（${percent}%）</span>
+        </div>
+      `;
+    });
+  }
 
   overlay.appendChild(box);
   overlay.onclick = () => overlay.remove();
@@ -305,7 +321,7 @@ function saveMemory(star) {
   localStorage.setItem("stargarden-memories", JSON.stringify(memories));
 }
 
-/* ===== ☰ 履歴（日時つき） ===== */
+/* ===== ☰ 履歴（日付＋時間） ===== */
 function createHamburger() {
   const btn = document.createElement("div");
   btn.textContent = "☰";
@@ -339,10 +355,12 @@ function openHistory() {
 
   memories.slice().reverse().forEach(m => {
     const d = new Date(m.createdAt);
-    const time = `${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()} ${d.getHours().toString().padStart(2,"0")}:${d.getMinutes().toString().padStart(2,"0")}`;
+    const time =
+      `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()} ` +
+      `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
 
     panel.innerHTML += `
-      <div style="margin-bottom:12px;">
+      <div style="margin-bottom:14px;">
         <div style="font-size:12px;opacity:.6;">${time}</div>
         <div>
           <span style="color:${m.color}">●</span>
